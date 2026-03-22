@@ -117,6 +117,46 @@
 - `define.yml` - 完整的 Agent 体系定义文件
 - `reference/ruflo/` - ruflo 框架参考材料
 
+## 项目示例
+
+### 已完成项目
+
+| 项目 | 状态 | 描述 | 完成日期 |
+|------|------|------|----------|
+| **sram_ctrl** | ✅ 已完成 | AI加速器SRAM控制器IP | 2026-03-22 |
+
+#### sram_ctrl 详细规格
+
+| 属性 | 值 |
+|------|-----|
+| IP名称 | SRAM Controller for AI Accelerator |
+| 版本 | 1.0.0 |
+| 容量 | 256Mb |
+| 端口类型 | 单端口SRAM |
+| APB端口 | 1x 64bit 用于寄存器配置 |
+| AXI端口 | 4x 1024bit AXI4/AXI4-Lite/AXI4-Stream |
+| ECC | SECDED + 错误记录 |
+| 时钟门控 | 子系统级动态门控 |
+
+**sram_ctrl 交付物：**
+
+- 规格书: `sram_ctrl/spec/sram_ctrl_spec.md`
+- RTL (完整): `sram_ctrl/rtl/sram_ctrl.v` (23KB)
+- RTL (仿真): `sram_ctrl/rtl/sram_ctrl_simple.sv` (~8KB)
+- 测试平台: `sram_ctrl/tb/sram_ctrl_tb.sv` (~20KB)
+- 验证报告: `sram_ctrl/tb/verification_report.md`
+
+**验证结果：**
+
+| 测试项 | 状态 |
+|--------|------|
+| APB Register Write | ✅ PASS |
+| APB Register Read | ✅ PASS |
+| AXI4 Single Write | ✅ PASS |
+| AXI4 Single Read | ✅ PASS |
+| AXI4 Burst Write | ✅ PASS |
+| AXI4 Burst Read | ✅ PASS |
+
 ## 版本历史
 
 - **v1.0.0** (2026-03-22): 初始版本，定义完整芯片研发流程 agent 体系
