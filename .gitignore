@@ -1,0 +1,5 @@
+# Submodules
+chip_design_pm/
+
+# Claude Code
+.agents/

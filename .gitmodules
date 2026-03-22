@@ -1,0 +1,3 @@
+[submodule "reference/ruflo"]
+	path = reference/ruflo
+	url = https://github.com/ruvnet/ruflo.git
