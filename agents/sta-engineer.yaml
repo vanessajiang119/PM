@@ -1,0 +1,15 @@
+# sta-engineer agent configuration
+# 静态时序分析工程师 - 负责时序分析和收敛
+type: reviewer
+version: "1.0.0"
+phase: physical-design
+capabilities:
+  - 时序分析
+  - 时序收敛
+  - 时序优化建议
+  - 时序签名审查
+skills:
+  - primetime
+  - timing-closure
+  - crosstalk-analysis
+createdAt: "2026-03-22"

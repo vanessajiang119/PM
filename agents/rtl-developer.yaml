@@ -1,0 +1,17 @@
+# rtl-developer agent configuration
+# RTL工程师 - 负责RTL代码编写和实现
+type: coder
+version: "1.0.0"
+phase: rtl-development
+capabilities:
+  - Verilog/SystemVerilog编码
+  - 模块设计
+  - 编码规范遵循
+  - 可综合性设计
+skills:
+  - verilog-coding
+  - systemverilog
+  - rtl-optimization
+optimizations:
+  - context-caching
+createdAt: "2026-03-22"

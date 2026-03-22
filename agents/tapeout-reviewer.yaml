@@ -1,0 +1,10 @@
+# tapeout-reviewer agent configuration
+# Tapeout评审员 - 负责最终Tapeout评审
+type: reviewer
+version: "1.0.0"
+phase: gds-output
+capabilities:
+  - 数据完整性检查
+  - 签收确认
+  - 风险评估
+createdAt: "2026-03-22"

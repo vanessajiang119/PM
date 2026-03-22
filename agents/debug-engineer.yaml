@@ -1,0 +1,15 @@
+# debug-engineer agent configuration
+# 调试工程师 - 负责RTL仿真调试和问题定位
+type: researcher
+version: "1.0.0"
+phase: rtl-development
+capabilities:
+  - 波形分析
+  - 问题定位
+  - 回归测试
+  - Bug跟踪
+skills:
+  - waveform-analysis
+  - debugging
+  - regression-testing
+createdAt: "2026-03-22"

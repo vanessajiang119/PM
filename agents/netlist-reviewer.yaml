@@ -1,0 +1,10 @@
+# netlist-reviewer agent configuration
+# 网表评审员 - 负责网表质量评审
+type: reviewer
+version: "1.0.0"
+phase: synthesis
+capabilities:
+  - 网表完整性检查
+  - 时序验收
+  - 功耗评估
+createdAt: "2026-03-22"

@@ -1,0 +1,14 @@
+# gds-engineer agent configuration
+# GDS工程师 - 负责最终GDS文件生成
+type: coder
+version: "1.0.0"
+phase: gds-output
+capabilities:
+  - GDSII生成
+  - 版图验证
+  - 数据输出
+  - 版图检查
+skills:
+  - gds-generation
+  - layout-verification
+createdAt: "2026-03-22"

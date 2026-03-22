@@ -1,0 +1,17 @@
+# spec-architect agent configuration
+# 系统架构师 - 负责芯片系统规格定义和架构设计
+type: architect
+version: "1.0.0"
+phase: specification
+capabilities:
+  - 系统需求分析
+  - 架构设计
+  - 性能参数定义
+  - 接口规格定义
+skills:
+  - architecture-design
+  - performance-modeling
+  - interface-specification
+optimizations:
+  - context-caching
+createdAt: "2026-03-22"

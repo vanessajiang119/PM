@@ -1,0 +1,14 @@
+# ip-integrator agent configuration
+# IP集成工程师 - 负责IP集成和系统集成
+type: architect
+version: "1.0.0"
+phase: all
+capabilities:
+  - IP集成
+  - 系统集成
+  - 接口调试
+  - 系统验证
+skills:
+  - ip-integration
+  - system-integration
+createdAt: "2026-03-22"

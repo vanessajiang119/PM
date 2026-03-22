@@ -1,0 +1,16 @@
+# chip-project-manager agent configuration
+# 芯片项目经理 - 负责整个芯片项目的协调和管理
+type: coordinator
+version: "1.0.0"
+phase: all
+capabilities:
+  - 项目计划制定
+  - 进度跟踪
+  - 资源协调
+  - 风险管理
+  - 里程碑管理
+skills:
+  - project-management
+  - risk-management
+  - milestone-tracking
+createdAt: "2026-03-22"

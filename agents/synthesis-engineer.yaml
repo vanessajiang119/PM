@@ -1,0 +1,15 @@
+# synthesis-engineer agent configuration
+# 综合工程师 - 负责RTL到网表的逻辑综合
+type: coder
+version: "1.0.0"
+phase: synthesis
+capabilities:
+  - 逻辑综合
+  - 约束编写
+  - 时序优化
+  - 功耗优化
+skills:
+  - design-compiler
+  - synthesis-constraints
+  - power-optimization
+createdAt: "2026-03-22"

@@ -1,0 +1,13 @@
+# formal-verification-engineer agent configuration
+# 形式验证工程师 - 负责形式验证
+type: reviewer
+version: "1.0.0"
+phase: synthesis
+capabilities:
+  - 等效性检查
+  - 属性验证
+  - 形式分析
+skills:
+  - formality
+  - property-checking
+createdAt: "2026-03-22"

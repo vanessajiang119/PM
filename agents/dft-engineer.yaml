@@ -1,0 +1,15 @@
+# dft-engineer agent configuration
+# DFT工程师 - 负责可测试性设计
+type: coder
+version: "1.0.0"
+phase: synthesis
+capabilities:
+  - Scan插入
+  - ATPG生成
+  - MBIST设计
+  - 边界扫描
+skills:
+  - dft-compiler
+  - scan-insertion
+  - mbist-design
+createdAt: "2026-03-22"

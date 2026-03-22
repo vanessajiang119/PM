@@ -1,0 +1,15 @@
+# physical-verification-engineer agent configuration
+# 物理验证工程师 - 负责DRC/LVS验证
+type: tester
+version: "1.0.0"
+phase: physical-design
+capabilities:
+  - DRC检查
+  - LVS检查
+  - ERC检查
+  - 天线效应检查
+skills:
+  - calibre
+  - dragon
+  - drc-fix
+createdAt: "2026-03-22"

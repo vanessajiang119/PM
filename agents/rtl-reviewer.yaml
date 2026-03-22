@@ -1,0 +1,15 @@
+# rtl-reviewer agent configuration
+# RTL评审员 - 负责RTL代码评审和质量把控
+type: reviewer
+version: "1.0.0"
+phase: rtl-development
+capabilities:
+  - 代码风格检查
+  - 可综合性审查
+  - CDC/CME分析
+  - 功耗分析
+skills:
+  - code-review
+  - synthesis-check
+  - cdc-analysis
+createdAt: "2026-03-22"

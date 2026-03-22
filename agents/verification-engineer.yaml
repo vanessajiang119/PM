@@ -1,0 +1,15 @@
+# verification-engineer agent configuration
+# 验证工程师 - 负责RTL功能验证和仿真
+type: tester
+version: "1.0.0"
+phase: rtl-development
+capabilities:
+  - UVM验证环境搭建
+  - 测试用例开发
+  - 覆盖率收集
+  - 验证计划执行
+skills:
+  - uvm-testing
+  - systemverilog-uvm
+  - coverage-analysis
+createdAt: "2026-03-22"

@@ -1,0 +1,15 @@
+# spec-writer agent configuration
+# 规格文档工程师 - 负责编写详细的模块规格文档
+type: coder
+version: "1.0.0"
+phase: specification
+capabilities:
+  - 功能规格编写
+  - 接口定义
+  - 时序规格
+  - 功耗规格
+  - 测试策略定义
+skills:
+  - technical-writing
+  - specification-template
+createdAt: "2026-03-22"

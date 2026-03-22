@@ -1,0 +1,1751 @@
+# =============================================================================
+# 芯片研发流程 Agent 体系定义
+# =============================================================================
+# 项目: 芯片研发管理流程 (从规格书到GDS)
+# 版本: 1.0.0
+# 创建日期: 2026-03-22
+# 框架: ruflo (claude-flow v3.5)
+# =============================================================================
+
+# 项目元数据
+project:
+  name: "芯片研发流程管理系统"
+  description: "支持从规格书到GDS的全流程芯片研发管理"
+  version: "1.0.0"
+  framework: "ruflo"
+  framework_version: "3.5.0"
+
+# =============================================================================
+# 可行性分析
+# =============================================================================
+feasibility:
+  summary: |
+    使用ruflo框架实现芯片研发管理流程是可行的，原因如下：
+
+    1. 多Agent协作能力 - ruflo支持多层次Agent体系，可模拟芯片设计各角色
+    2. 记忆系统 - 可追踪设计规格、验证状态、问题记录
+    3. 工作流支持 - 可定义从规格到GDS的线性/并行流程
+    4. 状态管理 - 支持复杂状态机，适合芯片设计各阶段Gate Review
+
+  advantages:
+    - 支持层次化任务分解（系统→子系统→模块）
+    - 可定制化的Agent类型匹配芯片设计角色
+    - 向量记忆支持设计知识积累和复用
+    - 支持与EDA工具的命令行集成
+
+  challenges:
+    - 芯片设计涉及大量专业EDA工具，需要 wrapper 集成
+    - 时序约束、功耗分析等专业领域知识需要专门训练
+    - 形式验证、物理验证等需要领域特定工具链
+
+  recommendations:
+    - 初期聚焦RTL设计和验证流程的自动化
+    - 逐步扩展到综合和物理设计阶段
+    - 需要为每个专业工具创建 skill/agent
+    - 建议与专业芯片设计平台集成
+
+# =============================================================================
+# Agent 类型定义
+# =============================================================================
+agent_types:
+  # -------------------------------------------------------------------------
+  # 阶段1: 规格书阶段 (Specification Phase)
+  # -------------------------------------------------------------------------
+  - id: "spec-architect"
+    name: "系统架构师"
+    type: "architect"
+    phase: "specification"
+    description: "负责芯片系统规格定义和架构设计"
+    capabilities:
+      - "系统需求分析"
+      - "架构设计"
+      - "性能参数定义"
+      - "接口规格定义"
+    skills:
+      - "architecture-design"
+      - "performance-modeling"
+      - "interface-specification"
+      - "spec-enrichment"
+    tools:
+      - "memory-store"
+      - "memory-search"
+    optimization: "context-caching"
+
+  - id: "spec-writer"
+    name: "规格文档工程师"
+    type: "coder"
+    phase: "specification"
+    description: "负责编写详细的模块规格文档"
+    capabilities:
+      - "功能规格编写"
+      - "接口定义"
+      - "时序规格"
+      - "功耗规格"
+      - "测试策略定义"
+    skills:
+      - "technical-writing"
+      - "specification-template"
+      - "spec-enrichment"
+    tools:
+      - "memory-store"
+      - "task-create"
+
+  - id: "spec-reviewer"
+    name: "规格评审员"
+    type: "reviewer"
+    phase: "specification"
+    description: "负责评审规格文档的完整性和一致性"
+    capabilities:
+      - "规格完整性检查"
+      - "一致性分析"
+      - "可实现性评估"
+      - "风险识别"
+    skills:
+      - "review-checklist"
+      - "consistency-analysis"
+    tools:
+      - "memory-search"
+      - "task-assign"
+
+  # -------------------------------------------------------------------------
+  # 阶段2: RTL开发阶段 (RTL Development)
+  # -------------------------------------------------------------------------
+  - id: "rtl-developer"
+    name: "RTL工程师"
+    type: "coder"
+    phase: "rtl-development"
+    description: "负责RTL代码编写和实现"
+    capabilities:
+      - "Verilog/SystemVerilog编码"
+      - "模块设计"
+      - "编码规范遵循"
+      - "可综合性设计"
+      - "SPEC注释规范编写"
+    skills:
+      - "verilog-coding"
+      - "systemverilog"
+      - "rtl-optimization"
+    tools:
+      - "memory-store"
+      - "task-create"
+      - "bash"
+    optimization: "context-caching"
+
+  - id: "verification-engineer"
+    name: "验证工程师"
+    type: "tester"
+    phase: "rtl-development"
+    description: "负责RTL功能验证和仿真"
+    capabilities:
+      - "UVM验证环境搭建"
+      - "测试用例开发"
+      - "覆盖率收集"
+      - "验证计划执行"
+    skills:
+      - "uvm-testing"
+      - "systemverilog-uvm"
+      - "coverage-analysis"
+    tools:
+      - "memory-store"
+      - "task-assign"
+
+  - id: "debug-engineer"
+    name: "调试工程师"
+    type: "researcher"
+    phase: "rtl-development"
+    description: "负责RTL仿真调试和问题定位"
+    capabilities:
+      - "波形分析"
+      - "问题定位"
+      - "回归测试"
+      - "Bug跟踪"
+    skills:
+      - "waveform-analysis"
+      - "debugging"
+      - "regression-testing"
+    tools:
+      - "memory-search"
+      - "memory-store"
+
+  - id: "rtl-reviewer"
+    name: "RTL评审员"
+    type: "reviewer"
+    phase: "rtl-development"
+    description: "负责RTL代码评审和质量把控"
+    capabilities:
+      - "代码风格检查"
+      - "可综合性审查"
+      - "CDC/CME分析"
+      - "功耗分析"
+      - "SPEC合规性验证"
+    skills:
+      - "code-review"
+      - "synthesis-check"
+      - "cdc-analysis"
+      - "verilog-code-review"
+    tools:
+      - "memory-search"
+      - "task-status"
+
+  # -------------------------------------------------------------------------
+  # RTL开发阶段 - EDA Agent 增强 (来自 eda_agent)
+  # -------------------------------------------------------------------------
+  - id: "rtl-editor"
+    name: "RTL编辑器"
+    type: "coder"
+    phase: "rtl-development"
+    description: "根据审查反馈修改RTL代码"
+    capabilities:
+      - "定位并修复设计错误"
+      - "优化代码结构和性能"
+      - "修复时序问题"
+      - "添加调试信号"
+    skills:
+      - "rtl-fix"
+      - "code-refactoring"
+    tools:
+      - "memory-store"
+      - "task-create"
+
+  - id: "tb-generator"
+    name: "测试台生成工程师"
+    type: "coder"
+    phase: "rtl-development"
+    description: "为RTL设计生成验证测试台"
+    capabilities:
+      - "生成SystemVerilog测试台"
+      - "编写自检测测试用例"
+      - "生成随机约束测试"
+      - "添加覆盖率监测点"
+    skills:
+      - "testbench-generation"
+      - "sv-uvm"
+    tools:
+      - "memory-store"
+      - "task-create"
+
+  - id: "simulator"
+    name: "仿真工程师"
+    type: "tester"
+    phase: "rtl-development"
+    description: "编译并运行RTL仿真"
+    capabilities:
+      - "使用iverilog编译"
+      - "使用verilator仿真"
+      - "解析仿真波形"
+      - "生成仿真报告"
+    skills:
+      - "iverilog-compilation"
+      - "verilator-simulation"
+    tools:
+      - "memory-store"
+      - "bash"
+
+  - id: "sim-reviewer"
+    name: "仿真审查员"
+    type: "reviewer"
+    phase: "rtl-development"
+    description: "分析仿真结果，识别设计错误"
+    capabilities:
+      - "解析仿真输出日志"
+      - "识别测试失败原因"
+      - "分析波形信号"
+      - "生成问题报告"
+    skills:
+      - "simulation-analysis"
+      - "waveform-analysis"
+    tools:
+      - "memory-search"
+      - "memory-store"
+
+  - id: "sim-judge"
+    name: "验证决策员"
+    type: "reviewer"
+    phase: "rtl-development"
+    description: "综合验证结果做出最终判定"
+    capabilities:
+      - "评估测试通过率"
+      - "检查覆盖率指标"
+      - "做出pass/fail判定"
+      - "生成最终验证报告"
+    skills:
+      - "verification-judgment"
+      - "coverage-assessment"
+    tools:
+      - "memory-search"
+      - "task-status"
+
+  - id: "coverage-analyzer"
+    name: "覆盖率分析员"
+    type: "tester"
+    phase: "rtl-development"
+    description: "分析代码覆盖率和功能覆盖率"
+    capabilities:
+      - "分析行覆盖率"
+      - "分析分支覆盖率"
+      - "分析状态机覆盖率"
+      - "生成覆盖率报告"
+    skills:
+      - "coverage-analysis"
+      - "line-coverage"
+      - "branch-coverage"
+      - "fsm-coverage"
+    tools:
+      - "memory-store"
+      - "bash"
+
+  # -------------------------------------------------------------------------
+  # 阶段3: 综合与网表阶段 (Synthesis & Netlist)
+  # -------------------------------------------------------------------------
+  - id: "synthesis-engineer"
+    name: "综合工程师"
+    type: "coder"
+    phase: "synthesis"
+    description: "负责RTL到网表的逻辑综合"
+    capabilities:
+      - "逻辑综合"
+      - "约束编写"
+      - "时序优化"
+      - "功耗优化"
+    skills:
+      - "design-compiler"
+      - "synthesis-constraints"
+      - "power-optimization"
+    tools:
+      - "memory-store"
+      - "task-create"
+
+  - id: "dft-engineer"
+    name: "DFT工程师"
+    type: "coder"
+    phase: "synthesis"
+    description: "负责可测试性设计"
+    capabilities:
+      - "Scan插入"
+      - "ATPG生成"
+      - "MBIST设计"
+      - "边界扫描"
+    skills:
+      - "dft-compiler"
+      - "scan-insertion"
+      - "mbist-design"
+    tools:
+      - "memory-store"
+
+  - id: "formal-verification-engineer"
+    name: "形式验证工程师"
+    type: "reviewer"
+    phase: "synthesis"
+    description: "负责形式验证"
+    capabilities:
+      - "等效性检查"
+      - "属性验证"
+      - "形式分析"
+    skills:
+      - "formality"
+      - "property-checking"
+    tools:
+      - "memory-search"
+
+  - id: "netlist-reviewer"
+    name: "网表评审员"
+    type: "reviewer"
+    phase: "synthesis"
+    description: "负责网表质量评审"
+    capabilities:
+      - "网表完整性检查"
+      - "时序验收"
+      - "功耗评估"
+    tools:
+      - "memory-search"
+
+  # -------------------------------------------------------------------------
+  # 阶段4: 物理设计阶段 (Physical Design)
+  # -------------------------------------------------------------------------
+  - id: "physical-designer"
+    name: "物理设计工程师"
+    type: "coder"
+    phase: "physical-design"
+    description: "负责布局布线和物理实现"
+    capabilities:
+      - "布局规划"
+      - "自动布局布线"
+      - "时钟树综合"
+      - "布线优化"
+    skills:
+      - "icc2"
+      - "innovus"
+      - "cts-optimization"
+    tools:
+      - "memory-store"
+      - "task-create"
+
+  - id: "sta-engineer"
+    name: "静态时序分析工程师"
+    type: "reviewer"
+    phase: "physical-design"
+    description: "负责时序分析和收敛"
+    capabilities:
+      - "时序分析"
+      - "时序收敛"
+      - "时序优化建议"
+      - "时序签名审查"
+    skills:
+      - "primetime"
+      - "timing-closure"
+      - "crosstalk-analysis"
+    tools:
+      - "memory-search"
+      - "memory-store"
+
+  - id: "physical-verification-engineer"
+    name: "物理验证工程师"
+    type: "tester"
+    phase: "physical-design"
+    description: "负责DRC/LVS验证"
+    capabilities:
+      - "DRC检查"
+      - "LVS检查"
+      - "ERC检查"
+      - "天线效应检查"
+    skills:
+      - "calibre"
+      - "dragon"
+      - "drc-fix"
+    tools:
+      - "memory-store"
+
+  - id: "power-engineer"
+    name: "功耗工程师"
+    type: "architect"
+    phase: "physical-design"
+    description: "负责功耗分析和优化"
+    capabilities:
+      - "动态功耗分析"
+      - "静态功耗分析"
+      - "功耗优化"
+      - "功耗签名"
+    skills:
+      - "power-analysis"
+      - "power-optimization"
+    tools:
+      - "memory-store"
+
+  # -------------------------------------------------------------------------
+  # 阶段5: GDS输出阶段 (GDS Output)
+  # -------------------------------------------------------------------------
+  - id: "gds-engineer"
+    name: "GDS工程师"
+    type: "coder"
+    phase: "gds-output"
+    description: "负责最终GDS文件生成"
+    capabilities:
+      - "GDSII生成"
+      - "版图验证"
+      - "数据输出"
+      - "版图检查"
+    skills:
+      - "gds-generation"
+      - "layout-verification"
+    tools:
+      - "memory-store"
+
+  - id: "tapeout-reviewer"
+    name: "Tapeout评审员"
+    type: "reviewer"
+    phase: "gds-output"
+    description: "负责最终Tapeout评审"
+    capabilities:
+      - "数据完整性检查"
+      - "签收确认"
+      - "风险评估"
+    tools:
+      - "memory-search"
+
+  # -------------------------------------------------------------------------
+  # 项目管理和协调
+  # -------------------------------------------------------------------------
+  - id: "chip-project-manager"
+    name: "芯片项目经理"
+    type: "coordinator"
+    phase: "all"
+    description: "负责整个芯片项目的协调和管理"
+    capabilities:
+      - "项目计划制定"
+      - "进度跟踪"
+      - "资源协调"
+      - "风险管理"
+      - "里程碑管理"
+    skills:
+      - "project-management"
+      - "risk-management"
+      - "milestone-tracking"
+    tools:
+      - "task-create"
+      - "task-assign"
+      - "task-status"
+      - "memory-store"
+
+  - id: "ip-integrator"
+    name: "IP集成工程师"
+    type: "architect"
+    phase: "all"
+    description: "负责IP集成和系统集成"
+    capabilities:
+      - "IP集成"
+      - "系统集成"
+      - "接口调试"
+      - "系统验证"
+    skills:
+      - "ip-integration"
+      - "system-integration"
+    tools:
+      - "memory-store"
+      - "memory-search"
+
+# =============================================================================
+# 工作流定义
+# =============================================================================
+workflows:
+  # -------------------------------------------------------------------------
+  # 主流程: 规格书到GDS
+  # -------------------------------------------------------------------------
+  - id: "chip-design-main"
+    name: "芯片设计主流程"
+    description: "从规格书到GDS的完整芯片设计流程"
+    topology: "hierarchical"
+    max_agents: 12
+    strategy: "specialized"
+    phases:
+      - name: "规格阶段"
+        duration: "2-4周"
+        gate: "SPEC Review"
+        agents:
+          - "spec-architect"
+          - "spec-writer"
+          - "spec-reviewer"
+
+      - name: "RTL开发阶段"
+        duration: "4-8周"
+        gate: "RTL Review"
+        agents:
+          - "rtl-developer"
+          - "rtl-reviewer"
+          - "rtl-editor"
+          - "tb-generator"
+          - "simulator"
+          - "sim-reviewer"
+          - "sim-judge"
+          - "coverage-analyzer"
+          - "debug-engineer"
+
+      - name: "综合阶段"
+        duration: "2-4周"
+        gate: "Synthesis Review"
+        agents:
+          - "synthesis-engineer"
+          - "dft-engineer"
+          - "formal-verification-engineer"
+          - "netlist-reviewer"
+
+      - name: "物理设计阶段"
+        duration: "4-8周"
+        gate: "Physical Review"
+        agents:
+          - "physical-designer"
+          - "sta-engineer"
+          - "physical-verification-engineer"
+          - "power-engineer"
+
+      - name: "GDS输出阶段"
+        duration: "1-2周"
+        gate: "Tapeout Review"
+        agents:
+          - "gds-engineer"
+          - "tapeout-reviewer"
+
+    dependencies:
+      - from: "SPEC Review"
+        to: "RTL Review"
+        condition: "spec_approved == true"
+
+      - from: "RTL Review"
+        to: "Synthesis Review"
+        condition: "rtl_approved == true"
+
+      - from: "Synthesis Review"
+        to: "Physical Review"
+        condition: "netlist_approved == true"
+
+      - from: "Physical Review"
+        to: "Tapeout Review"
+        condition: "physical_approved == true"
+
+  # -------------------------------------------------------------------------
+  # 子流程: 规格评审
+  # -------------------------------------------------------------------------
+  - id: "spec-review-workflow"
+    name: "规格评审流程"
+    description: "芯片规格书的评审和批准流程"
+    topology: "mesh"
+    max_agents: 3
+    agents:
+      - "spec-writer"
+      - "spec-reviewer"
+      - "chip-project-manager"
+    steps:
+      - "规格文档编写"
+      - "内部评审"
+      - "跨团队评审"
+      - "修订和完善"
+      - "正式批准"
+
+  # -------------------------------------------------------------------------
+  # 子流程: RTL开发验证 (EDA Agent 增强版)
+  # -------------------------------------------------------------------------
+  - id: "rtl-dev-verif-workflow"
+    name: "RTL开发验证流程"
+    description: "RTL代码开发和验证的完整流程 (集成eda_agent验证循环)"
+    topology: "hierarchical"
+    max_agents: 10
+    strategy: "specialized"
+    agents:
+      - "rtl-developer"
+      - "rtl-reviewer"
+      - "rtl-editor"
+      - "tb-generator"
+      - "simulator"
+      - "sim-reviewer"
+      - "sim-judge"
+      - "coverage-analyzer"
+      - "debug-engineer"
+    steps:
+      - "spec-parser: 规格解析"
+      - "rtl-developer: RTL生成"
+      - "rtl-reviewer: RTL代码审查"
+      - "tb-generator: 测试台生成"
+      - "simulator: 仿真运行"
+      - "coverage-analyzer: 覆盖率分析"
+      - "sim-reviewer: 仿真结果审查"
+      - "sim-judge: 验证决策"
+      - "rtl-editor: RTL编辑修复 (如需)"
+      - "循环至仿真运行直至通过"
+
+  # -------------------------------------------------------------------------
+  # 子流程: 综合与DFT
+  # -------------------------------------------------------------------------
+  - id: "synthesis-dft-workflow"
+    name: "综合与DFT流程"
+    description: "逻辑综合和可测试性设计流程"
+    topology: "hierarchical"
+    max_agents: 4
+    agents:
+      - "synthesis-engineer"
+      - "dft-engineer"
+      - "formal-verification-engineer"
+      - "netlist-reviewer"
+    steps:
+      - "综合约束准备"
+      - "逻辑综合"
+      - "DFT插入"
+      - "形式验证"
+      - "网表签收"
+
+  # -------------------------------------------------------------------------
+  # 子流程: 物理设计
+  # -------------------------------------------------------------------------
+  - id: "physical-design-workflow"
+    name: "物理设计流程"
+    description: "从网表到GDS的物理设计流程"
+    topology: "hierarchical"
+    max_agents: 6
+    agents:
+      - "physical-designer"
+      - "sta-engineer"
+      - "physical-verification-engineer"
+      - "power-engineer"
+    steps:
+      - "布局规划"
+      - "功耗分析"
+      - "自动布局布线"
+      - "时钟树综合"
+      - "静态时序分析"
+      - "DRC/LVS修复"
+      - "时序收敛"
+
+  # -------------------------------------------------------------------------
+  # 子流程: Tapeout
+  # -------------------------------------------------------------------------
+  - id: "tapeout-workflow"
+    name: "Tapeout流程"
+    description: "最终GDS输出和Tapeout评审流程"
+    topology: "star"
+    max_agents: 3
+    agents:
+      - "gds-engineer"
+      - "tapeout-reviewer"
+      - "chip-project-manager"
+    steps:
+      - "最终版图检查"
+      - "数据准备"
+      - "Tapeout评审"
+      - "数据提交"
+
+# =============================================================================
+# 里程碑定义
+# =============================================================================
+milestones:
+  - id: "M0"
+    name: "项目启动"
+    phase: "specification"
+    criteria:
+      - "项目章程批准"
+      - "团队组建完成"
+      - "初步规格定义"
+
+  - id: "M1"
+    name: "规格完成"
+    phase: "specification"
+    criteria:
+      - "系统规格文档完成"
+      - "模块规格文档完成"
+      - "SPEC Review通过"
+
+  - id: "M2"
+    name: "RTL freeze"
+    phase: "rtl-development"
+    criteria:
+      - "所有模块RTL完成"
+      - "功能仿真通过"
+      - "覆盖率达标"
+      - "RTL Review通过"
+
+  - id: "M3"
+    name: "综合完成"
+    phase: "synthesis"
+    criteria:
+      - "网表生成完成"
+      - "形式验证通过"
+      - "DFT插入完成"
+
+  - id: "M4"
+    name: "物理设计完成"
+    phase: "physical-design"
+    criteria:
+      - "布局布线完成"
+      - "时序收敛"
+      - "DRC/LVS通过"
+      - "功耗评估完成"
+
+  - id: "M5"
+    name: "Tapeout"
+    phase: "gds-output"
+    criteria:
+      - "GDS生成完成"
+      - "所有评审通过"
+      - "数据完整性验证"
+
+# =============================================================================
+# 交付物定义
+# =============================================================================
+deliverables:
+  specification_phase:
+    - name: "系统规格文档 (SSS)"
+      format: "Word/PDF"
+      owner: "spec-architect"
+    - name: "模块规格文档 (MSD)"
+      format: "Word/PDF"
+      owner: "spec-writer"
+    - name: "接口规格文档"
+      format: "Excel/Spec"
+      owner: "spec-writer"
+
+  rtl_development_phase:
+    - name: "RTL代码"
+      format: "Verilog/SystemVerilog"
+      owner: "rtl-developer"
+    - name: "验证环境"
+      format: "SystemVerilog/UVM"
+      owner: "verification-engineer"
+    - name: "测试用例"
+      format: "SV/UVM"
+      owner: "verification-engineer"
+    - name: "覆盖率报告"
+      format: "HTML/PDF"
+      owner: "verification-engineer"
+    - name: "代码评审报告"
+      format: "PDF"
+      owner: "rtl-reviewer"
+
+  synthesis_phase:
+    - name: "综合约束文件"
+      format: "SDC"
+      owner: "synthesis-engineer"
+    - name: "网表文件"
+      format: "Verilog/NETLIST"
+      owner: "synthesis-engineer"
+    - name: "形式验证报告"
+      format: "PDF"
+      owner: "formal-verification-engineer"
+    - name: "DFT报告"
+      format: "PDF"
+      owner: "dft-engineer"
+
+  physical_design_phase:
+    - name: "布局规划"
+      format: "DEF"
+      owner: "physical-designer"
+    - name: "时钟树"
+      format: "DEF/REPORT"
+      owner: "physical-designer"
+    - name: "GDSII文件"
+      format: "GDSII"
+      owner: "physical-designer"
+    - name: "时序报告"
+      format: "RPT"
+      owner: "sta-engineer"
+    - name: "功耗报告"
+      format: "RPT/PDF"
+      owner: "power-engineer"
+    - name: "DRC/LVS报告"
+      format: "RPT"
+      owner: "physical-verification-engineer"
+
+  gds_output_phase:
+    - name: "最终GDSII"
+      format: "GDSII"
+      owner: "gds-engineer"
+    - name: "Tapeout签收单"
+      format: "PDF"
+      owner: "tapeout-reviewer"
+
+# =============================================================================
+# 评审Checklist模板
+# =============================================================================
+review_checklists:
+  spec_review:
+    items:
+      - "功能完整性检查"
+      - "接口一致性检查"
+      - "时序规格合理性"
+      - "功耗规格可达性"
+      - "可测试性考虑"
+      - "可实现性评估"
+      - "风险识别和缓解"
+
+  rtl_review:
+    items:
+      - "编码规范遵循"
+      - "可综合性检查"
+      - "CDC/CME分析"
+      - "代码覆盖率"
+      - "功能覆盖率"
+      - "功耗意识设计"
+      - "安全考虑"
+
+  synthesis_review:
+    items:
+      - "时序收敛"
+      - "功耗达标"
+      - "面积合理"
+      - "DFT覆盖率"
+      - "形式验证通过"
+      - "网表质量"
+
+  physical_review:
+    items:
+      - "时序收敛确认"
+      - "DRC clean"
+      - "LVS clean"
+      - "功耗评估"
+      - "信号完整性"
+      - "版图质量"
+
+  tapeout_review:
+    items:
+      - "GDS完整性"
+      - "所有问题关闭"
+      - "数据格式正确"
+      - "签收确认"
+
+# =============================================================================
+# EDA工具集成占位符
+# =============================================================================
+# 注: 实际项目中需要为每个工具创建对应的skill
+eda_tools:
+  simulation:
+    - "VCS"
+    - "Questasim"
+    - "NC-Verilog"
+
+  synthesis:
+    - "Design Compiler"
+    - "Genus"
+
+  dft:
+    - "DFT Compiler"
+    - "TetraMAX"
+
+  formal:
+    - "Formality"
+    - "Conformal"
+
+  physical:
+    - "ICC2"
+    - "Innovus"
+    - "Voltus"
+
+  sta:
+    - "PrimeTime"
+    - "Tempus"
+
+  verification:
+    - "Calibre"
+    - "Hercules"
+
+# =============================================================================
+# 记忆命名空间定义
+# =============================================================================
+memory_namespaces:
+  - name: "specifications"
+    description: "存储规格文档和设计决策"
+  - name: "rtl-code"
+    description: "存储RTL代码知识"
+  - name: "verification"
+    description: "存储验证计划和结果"
+  - name: "synthesis"
+    description: "存储综合结果和约束"
+  - name: "physical"
+    description: "存储物理设计数据"
+  - name: "issues"
+    description: "存储问题和解决方案"
+  - name: "patterns"
+    description: "存储可复用的设计模式"
+
+# =============================================================================
+# Skill 占位符定义
+# =============================================================================
+# 注: 实际项目中需要创建对应的skill文件
+skills:
+  - id: "verilog-coding"
+    description: "Verilog/SystemVerilog编码最佳实践"
+  - id: "uvm-testing"
+    description: "UVM验证方法学"
+  - id: "synthesis-constraints"
+    description: "综合约束编写指南"
+  - id: "timing-closure"
+    description: "时序收敛技术"
+  - id: "power-optimization"
+    description: "功耗优化技术"
+  - id: "drc-lvs"
+    description: "物理验证规则和修复"
+
+  # EDA Agent 新增 Skills
+  - id: "spec-enrichment"
+    description: "规格补全 - 根据基本模块规格自动补全完整设计规格"
+    source: "/root/workspace/eda_agent/spec_enrichment_skill"
+  - id: "verilog-code-review"
+    description: "Verilog代码审查 - 审查Verilog代码并验证SPEC合规性"
+    source: "/root/workspace/eda_agent/verilog_code_review_skill"
+  - id: "testbench-generation"
+    description: "测试台生成 - 生成SystemVerilog/UVM测试台"
+  - id: "iverilog-compilation"
+    description: "iverilog编译 - 使用ICARUS Verilog编译RTL"
+  - id: "verilator-simulation"
+    description: "verilator仿真 - 使用verilator进行仿真"
+  - id: "coverage-analysis"
+    description: "覆盖率分析 - 行覆盖率、分支覆盖率、FSM覆盖率分析"
+
+# =============================================================================
+# Agent Memory 配置
+# =============================================================================
+# 定义每个agent的memory namespace、存储内容和操作
+memory:
+  # 全局配置
+  config:
+    backend: "hybrid"  # hybrid: SQLite + AgentDB (HNSW索引)
+    path: "./data/memory"
+    enable_vector_search: true
+    session_retention_days: 30
+    longterm_retention_days: 365
+
+  # Agent Memory Namespaces - 每个agent独立的memory空间
+  namespaces:
+    # =====================================================================
+    # 规格阶段 Agents
+    # =====================================================================
+    - namespace: "spec-architect"
+      agent_id: "spec-architect"
+      description: "系统架构师记忆存储"
+      keys:
+        - key: "architecture_decisions"
+          description: "架构决策记录"
+          type: "longterm"
+        - key: "system_requirements"
+          description: "系统需求分析"
+          type: "longterm"
+        - key: "performance_targets"
+          description: "性能目标定义"
+          type: "longterm"
+
+    - namespace: "spec-writer"
+      agent_id: "spec-writer"
+      description: "规格文档工程师记忆存储"
+      keys:
+        - key: "module_specs"
+          description: "模块规格文档"
+          type: "longterm"
+        - key: "interface_definitions"
+          description: "接口定义"
+          type: "longterm"
+        - key: "timing_specs"
+          description: "时序规格"
+          type: "session"
+
+    - namespace: "spec-reviewer"
+      agent_id: "spec-reviewer"
+      description: "规格评审员记忆存储"
+      keys:
+        - key: "review_findings"
+          description: "评审发现"
+          type: "longterm"
+        - key: "issues_tracked"
+          description: "跟踪的问题"
+          type: "session"
+        - key: "approval_status"
+          description: "审批状态"
+          type: "session"
+
+    # =====================================================================
+    # RTL开发阶段 Agents
+    # =====================================================================
+    - namespace: "rtl-developer"
+      agent_id: "rtl-developer"
+      description: "RTL工程师记忆存储"
+      keys:
+        - key: "rtl_code_history"
+          description: "RTL代码版本历史"
+          type: "longterm"
+        - key: "coding_decisions"
+          description: "编码决策"
+          type: "session"
+        - key: "module_implementations"
+          description: "模块实现"
+          type: "longterm"
+
+    - namespace: "verification-engineer"
+      agent_id: "verification-engineer"
+      description: "验证工程师记忆存储"
+      keys:
+        - key: "testbenches"
+          description: "测试台历史"
+          type: "longterm"
+        - key: "test_results"
+          description: "测试结果"
+          type: "session"
+        - key: "coverage_data"
+          description: "覆盖率数据"
+          type: "session"
+
+    - namespace: "debug-engineer"
+      agent_id: "debug-engineer"
+      description: "调试工程师记忆存储"
+      keys:
+        - key: "debug_sessions"
+          description: "调试会话历史"
+          type: "longterm"
+        - key: "issue_analysis"
+          description: "问题分析记录"
+          type: "session"
+        - key: "fix_solutions"
+          description: "修复方案"
+          type: "longterm"
+
+    - namespace: "rtl-reviewer"
+      agent_id: "rtl-reviewer"
+      description: "RTL评审员记忆存储"
+      keys:
+        - key: "review_reports"
+          description: "评审报告"
+          type: "longterm"
+        - key: "code_issues"
+          description: "代码问题记录"
+          type: "session"
+        - key: "style_violations"
+          description: "风格违规"
+          type: "session"
+
+    - namespace: "rtl-editor"
+      agent_id: "rtl-editor"
+      description: "RTL编辑器记忆存储"
+      keys:
+        - key: "fix_history"
+          description: "修复历史"
+          type: "longterm"
+        - key: "applied_fixes"
+          description: "已应用的修复"
+          type: "session"
+        - key: "code_changes"
+          description: "代码变更记录"
+          type: "session"
+
+    - namespace: "tb-generator"
+      agent_id: "tb-generator"
+      description: "测试台生成工程师记忆存储"
+      keys:
+        - key: "testbench_templates"
+          description: "测试台模板"
+          type: "longterm"
+        - key: "test_cases"
+          description: "测试用例"
+          type: "longterm"
+
+    - namespace: "simulator"
+      agent_id: "simulator"
+      description: "仿真工程师记忆存储"
+      keys:
+        - key: "simulation_logs"
+          description: "仿真日志"
+          type: "session"
+        - key: "compile_commands"
+          description: "编译命令历史"
+          type: "longterm"
+        - key: "waveform_files"
+          description: "波形文件记录"
+          type: "session"
+
+    - namespace: "sim-reviewer"
+      agent_id: "sim-reviewer"
+      description: "仿真审查员记忆存储"
+      keys:
+        - key: "simulation_analysis"
+          description: "仿真分析结果"
+          type: "session"
+        - key: "failure_analysis"
+          description: "失败分析"
+          type: "longterm"
+        - key: "test_failures"
+          description: "测试失败记录"
+          type: "session"
+
+    - namespace: "sim-judge"
+      agent_id: "sim-judge"
+      description: "验证决策员记忆存储"
+      keys:
+        - key: "verdict_history"
+          description: "判定历史"
+          type: "longterm"
+        - key: "coverage_assessment"
+          description: "覆盖率评估"
+          type: "session"
+
+    - namespace: "coverage-analyzer"
+      agent_id: "coverage-analyzer"
+      description: "覆盖率分析员记忆存储"
+      keys:
+        - key: "coverage_reports"
+          description: "覆盖率报告"
+          type: "longterm"
+        - key: "coverage_gaps"
+          description: "覆盖率缺口"
+          type: "session"
+
+    # =====================================================================
+    # 综合阶段 Agents
+    # =====================================================================
+    - namespace: "synthesis-engineer"
+      agent_id: "synthesis-engineer"
+      description: "综合工程师记忆存储"
+      keys:
+        - key: "synthesis_reports"
+          description: "综合报告"
+          type: "longterm"
+        - key: "constraints"
+          description: "约束文件"
+          type: "longterm"
+        - key: "optimization_results"
+          description: "优化结果"
+          type: "session"
+
+    - namespace: "dft-engineer"
+      agent_id: "dft-engineer"
+      description: "DFT工程师记忆存储"
+      keys:
+        - key: "scan_chains"
+          description: "Scan链配置"
+          type: "longterm"
+        - key: "atpg_patterns"
+          description: "ATPG模式"
+          type: "longterm"
+
+    - namespace: "formal-verification-engineer"
+      agent_id: "formal-verification-engineer"
+      description: "形式验证工程师记忆存储"
+      keys:
+        - key: "formal_results"
+          description: "形式验证结果"
+          type: "longterm"
+        - key: "proof_reports"
+          description: "证明报告"
+          type: "session"
+
+    - namespace: "netlist-reviewer"
+      agent_id: "netlist-reviewer"
+      description: "网表评审员记忆存储"
+      keys:
+        - key: "netlist_quality"
+          description: "网表质量评估"
+          type: "longterm"
+
+    # =====================================================================
+    # 物理设计阶段 Agents
+    # =====================================================================
+    - namespace: "physical-designer"
+      agent_id: "physical-designer"
+      description: "物理设计工程师记忆存储"
+      keys:
+        - key: "floorplans"
+          description: "版图规划"
+          type: "longterm"
+        - key: "placement_results"
+          description: "布局结果"
+          type: "session"
+
+    - namespace: "sta-engineer"
+      agent_id: "sta-engineer"
+      description: "静态时序分析工程师记忆存储"
+      keys:
+        - key: "timing_reports"
+          description: "时序报告"
+          type: "longterm"
+        - key: "timing_violations"
+          description: "时序违规"
+          type: "session"
+
+    - namespace: "physical-verification-engineer"
+      agent_id: "physical-verification-engineer"
+      description: "物理验证工程师记忆存储"
+      keys:
+        - key: "drc_results"
+          description: "DRC结果"
+          type: "longterm"
+        - key: "lvs_results"
+          description: "LVS结果"
+          type: "longterm"
+
+    - namespace: "power-engineer"
+      agent_id: "power-engineer"
+      description: "功耗工程师记忆存储"
+      keys:
+        - key: "power_reports"
+          description: "功耗报告"
+          type: "longterm"
+        - key: "power_analysis"
+          description: "功耗分析"
+          type: "session"
+
+    # =====================================================================
+    # GDS输出阶段 Agents
+    # =====================================================================
+    - namespace: "gds-engineer"
+      agent_id: "gds-engineer"
+      description: "GDS工程师记忆存储"
+      keys:
+        - key: "gds_output"
+          description: "GDS输出记录"
+          type: "longterm"
+
+    - namespace: "tapeout-reviewer"
+      agent_id: "tapeout-reviewer"
+      description: "Tapeout评审员记忆存储"
+      keys:
+        - key: "tapeout_signoff"
+          description: "Tapeout签收记录"
+          type: "longterm"
+        - key: "risk_assessment"
+          description: "风险评估"
+          type: "session"
+
+    # =====================================================================
+    # 项目管理和集成
+    # =====================================================================
+    - namespace: "chip-project-manager"
+      agent_id: "chip-project-manager"
+      description: "芯片项目经理记忆存储"
+      keys:
+        - key: "project_plan"
+          description: "项目计划"
+          type: "longterm"
+        - key: "milestone_tracking"
+          description: "里程碑跟踪"
+          type: "longterm"
+        - key: "risk_registry"
+          description: "风险登记"
+          type: "longterm"
+        - key: "resource_allocation"
+          description: "资源分配"
+          type: "session"
+
+    - namespace: "ip-integrator"
+      agent_id: "ip-integrator"
+      description: "IP集成工程师记忆存储"
+      keys:
+        - key: "integration_history"
+          description: "集成历史"
+          type: "longterm"
+        - key: "interface_connections"
+          description: "接口连接"
+          type: "longterm"
+
+  # Memory 操作接口
+  operations:
+    store: |
+      # 存储memory
+      npx claude-flow@v3alpha memory store \
+        --namespace {agent_namespace} \
+        --key "{memory_key}" \
+        --value "{memory_value}"
+
+    retrieve: |
+      # 检索memory
+      npx claude-flow@v3alpha memory retrieve \
+        --namespace {agent_namespace} \
+        --key "{memory_key}"
+
+    search: |
+      # 向量搜索
+      npx claude-flow@v3alpha memory search \
+        --namespace {agent_namespace} \
+        --query "{search_query}"
+
+    list: |
+      # 列出所有keys
+      npx claude-flow@v3alpha memory list \
+        --namespace {agent_namespace}
+
+  # 调试过程记忆示例 (每个agent的典型调试记录)
+  debugging_memory_examples:
+    rtl-developer: |
+      ## RTL Developer 调试记忆
+      - **时间**: 2026-03-22 10:30
+      - **问题**: 计数器在复位后未正确清零
+      - **分析**: 发现异步复位逻辑错误
+      - **修复**: 将异步复位改为同步复位
+      - **结果**: 验证通过
+
+    debug-engineer: |
+      ## Debug Engineer 调试记忆
+      - **时间**: 2026-03-22 14:00
+      - **问题**: 仿真超时无输出
+      - **分析**: 时钟信号未正确生成
+      - **定位**: initial块中时钟频率设置错误
+      - **解决**: 修正时钟周期为10ns
+
+    rtl-reviewer: |
+      ## RTL Reviewer 记忆
+      - **时间**: 2026-03-22 16:00
+      - **发现**: 缺少clock domain crossing处理
+      - **建议**: 添加同步器链
+      - **状态**: 待修复
+
+    simulator: |
+      ## Simulator 记忆
+      - **编译**: iverilog -g2012 -o sim.vvp tb.sv rtl.v
+      - **运行**: vvp sim.vvp
+      - **结果**: PASS - 所有测试通过
+      - **仿真时间**: 1.234ms
+
+# =============================================================================
+# MCP工具配置 (来自 eda_agent)
+# =============================================================================
+mcp_tools:
+  verilog_tools:
+    - name: "iverilog"
+      description: "ICARUS Verilog 编译器"
+      version: ">=12.0"
+      commands:
+        compile: "iverilog -g2012 -o {output} {tb_file} {rtl_file} -I{include_dir}"
+        run: "vvp {compiled_file}"
+
+    - name: "verilator"
+      description: "Verilog仿真和lint工具"
+      commands:
+        compile: "verilator --cc --exe --build {rtl_file} {tb_file}"
+        run: "./obj_dir/V{module_name}"
+        lint: "verilator --lint-only {rtl_file}"
+
+  mcp_servers:
+    - name: "verilog_mcp"
+      description: "Verilog代码分析MCP服务器"
+      path: "/root/workspace/eda_agent/verilog_mcp"
+      tools:
+        - name: "verilog_syntax_check"
+          description: "验证Verilog/SystemVerilog语法"
+        - name: "verilog_list_modules"
+          description: "列出代码中的所有模块定义"
+        - name: "verilog_analyze_signals"
+          description: "分析信号声明和使用"
+
+# =============================================================================
+# 版本历史
+# =============================================================================
+changelog:
+  - version: "1.0.0"
+    date: "2026-03-22"
+    author: "Claude"
+    description: "初始版本，定义完整芯片研发流程agent体系"
+    changes:
+      - "定义5个主要阶段的agent类型"
+      - "定义6个工作流程"
+      - "定义5个里程碑"
+      - "定义各阶段交付物模板"
+  - version: "1.1.0"
+    date: "2026-03-22"
+    author: "Claude"
+    description: "集成eda_agent RTL验证能力"
+    changes:
+      - "新增6个RTL验证agent (rtl-editor, tb-generator, simulator, sim-reviewer, sim-judge, coverage-analyzer)"
+      - "更新spec-architect和spec-writer添加spec-enrichment skill"
+      - "更新rtl-developer添加SPEC注释规范"
+      - "更新rtl-reviewer添加verilog-code-review skill"
+      - "新增RTL开发验证流程 (eda_agent风格)"
+      - "新增MCP工具配置 (verilog_mcp, iverilog, verilator)"
+      - "定义评审checklist"
+
+# =============================================================================
+# RAG (检索增强生成) 配置
+# =============================================================================
+# 支持1000+页专业芯片设计文档的RAG系统
+rag:
+  # 全局配置
+  config:
+    enabled: true
+    version: "1.0.0"
+    description: "芯片设计RAG检索系统 - 支持多Agent角色文档管理"
+
+  # 目录配置
+  directories:
+    root: "./rag"
+    documents: "./rag/documents"
+    data: "./rag/data"
+    scripts: "./rag/scripts"
+    logs: "./rag/logs"
+
+    # 按Agent角色分类的文档目录
+    agent_directories:
+      - agent: "spec-architect"
+        path: "spec-architect"
+        description: "系统架构师文档"
+        subdirs: ["architecture_specs", "performance_models", "interface_defs"]
+
+      - agent: "spec-writer"
+        path: "spec-writer"
+        description: "规格文档工程师文档"
+        subdirs: ["functional_specs", "timing_specs", "ip_documents"]
+
+      - agent: "rtl-developer"
+        path: "rtl-developer"
+        description: "RTL工程师文档"
+        subdirs: ["design_guides", "coding_standards", "code_examples", "verilog_templates"]
+
+      - agent: "verification-engineer"
+        path: "verification-engineer"
+        description: "验证工程师文档"
+        subdirs: ["uvm_guides", "testbench_examples", "coverage_plans", "verification_reports"]
+
+      - agent: "debug-engineer"
+        path: "debug-engineer"
+        description: "调试工程师文档"
+        subdirs: ["debug_guides", "waveform_analysis", "issue_tracking"]
+
+      - agent: "rtl-reviewer"
+        path: "rtl-reviewer"
+        description: "RTL评审员文档"
+        subdirs: ["review_checklists", "lint_rules", "cdc_analysis"]
+
+      - agent: "synthesis-engineer"
+        path: "synthesis-engineer"
+        description: "综合工程师文档"
+        subdirs: ["dc_guides", "sdc_examples", "optimization_tech"]
+
+      - agent: "dft-engineer"
+        path: "dft-engineer"
+        description: "DFT工程师文档"
+        subdirs: ["scan_insertion", "atpg_guides", "mbist_designs"]
+
+      - agent: "formal-verification-engineer"
+        path: "formal-verification-engineer"
+        description: "形式验证工程师文档"
+        subdirs: ["formal_guides", "property_specs", "proof_reports"]
+
+      - agent: "netlist-reviewer"
+        path: "netlist-reviewer"
+        description: "网表评审员文档"
+        subdirs: ["netlist_analysis", "quality_checks"]
+
+      - agent: "physical-designer"
+        path: "physical-designer"
+        description: "物理设计工程师文档"
+        subdirs: ["floorplanning", "place_route", "cts_guides", "timing_closure"]
+
+      - agent: "sta-engineer"
+        path: "sta-engineer"
+        description: "静态时序分析工程师文档"
+        subdirs: ["timing_guides", "constraint_examples", "crosstalk_analysis"]
+
+      - agent: "physical-verification-engineer"
+        path: "physical-verification-engineer"
+        description: "物理验证工程师文档"
+        subdirs: ["drc_rules", "lvs_guides", "antenna_check"]
+
+      - agent: "power-engineer"
+        path: "power-engineer"
+        description: "功耗工程师文档"
+        subdirs: ["power_analysis", "low_power_design", "pdn_design"]
+
+      - agent: "gds-engineer"
+        path: "gds-engineer"
+        description: "GDS工程师文档"
+        subdirs: ["gds_generation", "layout_verification"]
+
+      - agent: "tapeout-reviewer"
+        path: "tapeout-reviewer"
+        description: "Tapeout评审员文档"
+        subdirs: ["signoff_checklists", "risk_assessment"]
+
+      - agent: "chip-project-manager"
+        path: "chip-project-manager"
+        description: "芯片项目经理文档"
+        subdirs: ["project_plans", "milestone_tracking", "risk_management"]
+
+      - agent: "ip-integrator"
+        path: "ip-integrator"
+        description: "IP集成工程师文档"
+        subdirs: ["integration_guides", "interface_protocols"]
+
+      - agent: "common"
+        path: "common"
+        description: "通用文档 (所有角色可用)"
+        subdirs: ["eda_tools_guides", "process_nodes", "standards", "glossary"]
+
+      - agent: "shared"
+        path: "shared"
+        description: "共享参考文档"
+        subdirs: ["reference_manuals", "app_notes", "training_materials"]
+
+  # 向量数据库配置
+  vector_db:
+    type: "chroma"               # ChromaDB
+    persist_directory: "./rag/data/chroma"
+    collection_name: "chip_design"
+
+    # HNSW索引优化 (支持大数据量)
+    hnsw_config:
+      ef_construction: 200
+      ef_search: 200
+      M: 16
+      metric: "cosine"
+
+    # 索引优化
+    index_optimization:
+      incremental_update: true
+      batch_indexing: true
+      num_workers: 4
+
+  # 文档分块配置
+  chunking:
+    # 基础参数
+    chunk_size: 1024             # tokens
+    chunk_overlap: 128           # tokens
+
+    # 文档类型自适应
+    by_document_type:
+      technical_specs:
+        chunk_size: 2048
+        overlap: 256
+      code_documentation:
+        chunk_size: 512
+        overlap: 64
+        preserve_language: true
+      user_guides:
+        chunk_size: 1024
+        overlap: 128
+
+    # 特殊格式处理
+    special_handling:
+      tables: "extract_as_json"
+      figures: "ocr_and_describe"
+      formulas: "latex_preserve"
+
+  # Embedding模型配置
+  embedding:
+    model: "text-embedding-3-large"
+    dimensions: 3072
+    batch_size: 1000
+
+    # 本地模型备选
+    local_models:
+      - name: "bge-m3"
+        dimension: 1024
+        quantized: true
+
+  # 检索配置
+  retrieval:
+    # 多路召回
+    multi_way_recall:
+      - method: "semantic"
+        weight: 0.4
+      - method: "keyword"
+        weight: 0.3
+        engine: "bm25"
+      - method: "exact"
+        weight: 0.2
+      - method: "agent_specific"
+        weight: 0.1
+
+    # 重排序
+    reranking:
+      enabled: true
+      model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+      top_k: 10
+
+    # 查询预处理
+    query_processing:
+      expand_query: true
+      expand_with_synonyms: true
+      language_detection: true
+
+    # 上下文窗口
+    context_window:
+      max_chunks: 10
+      max_tokens: 8000
+      aggregate_strategy: "longest"
+
+  # 大文档处理 (1000+页)
+  large_document_handling:
+    # 文档结构感知
+    structure_aware:
+      enabled: true
+      detect_sections: true
+      detect_headings: true
+      table_of_contents: true
+
+    # 摘要预生成
+    summarization:
+      enabled: true
+      summary_chunk_size: 10     # 每10页生成摘要
+      store_summaries: true
+
+    # 多级检索
+    multi_level:
+      enabled: true
+      levels:
+        - name: "overview"
+          chunk_size: 4096
+        - name: "detail"
+          chunk_size: 1024
+        - name: "reference"
+          chunk_size: 512
+
+    # 增量索引
+    incremental:
+      enabled: true
+      track_modifications: true
+      update_strategy: "smart"
+
+    # 性能优化
+    performance:
+      cache_embeddings: true
+      parallel_processing: true
+      memory_limit: "16GB"
+      batch_processing: true
+
+  # Agent特定RAG
+  agent_rag:
+    spec-architect:
+      preferred_sources: ["spec-architect", "common"]
+      search_depth: "detailed"
+      include_cross_references: true
+
+    rtl-developer:
+      preferred_sources: ["rtl-developer", "common"]
+      include_code_examples: true
+      search_related_ip: true
+
+    verification-engineer:
+      preferred_sources: ["verification-engineer", "common"]
+      include_uvm_examples: true
+
+    # 跨Agent知识共享
+    cross_agent:
+      enabled: true
+      shared_sources: ["common", "shared"]
+      reference_other_agents: true
+
+  # 后处理配置
+  post_processing:
+    # 结果去重
+    deduplication:
+      enabled: true
+      similarity_threshold: 0.95
+
+    # 结果排序
+    ranking:
+      diversity_weight: 0.2
+      recency_weight: 0.1
+      authority_weight: 0.1
+
+    # 结果格式化
+    formatting:
+      include_source: true
+      include_page_number: true
+      include_relevance_score: true
+      max_source_length: 200
+
+  # API接口配置
+  api:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8000
+    endpoints:
+      - path: "/rag/ingest"
+        method: "POST"
+        description: "上传文档并索引"
+      - path: "/rag/query"
+        method: "POST"
+        description: "RAG查询"
+      - path: "/rag/rebuild"
+        method: "POST"
+        description: "重建索引"
+      - path: "/rag/stats"
+        method: "GET"
+        description: "获取RAG统计信息"
+
+  # 与现有系统集成
+  integration:
+    # 与Agent Skills集成
+    agent_integration:
+      hook_name: "on_rag_query"
+      auto_retrieve: true
+
+    # Memory系统集成
+    memory_integration:
+      store_rag_results: true
+      context_window: 5
+
+  # 依赖项
+  requirements:
+    python_packages:
+      - "chromadb>=0.4.0"
+      - "langchain>=0.1.0"
+      - "langchain-community>=0.0.10"
+      - "pypdf>=3.0.0"
+      - "pydantic>=2.0.0"
+      - "tiktoken>=0.5.0"
+      - "faiss-cpu"
+
+    system_requirements:
+      python_version: ">=3.11"
+      memory: "16GB"
+      disk_space: "100GB"
+

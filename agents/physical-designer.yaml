@@ -1,0 +1,15 @@
+# physical-designer agent configuration
+# 物理设计工程师 - 负责布局布线和物理实现
+type: coder
+version: "1.0.0"
+phase: physical-design
+capabilities:
+  - 布局规划
+  - 自动布局布线
+  - 时钟树综合
+  - 布线优化
+skills:
+  - icc2
+  - innovus
+  - cts-optimization
+createdAt: "2026-03-22"

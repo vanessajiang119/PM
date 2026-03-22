@@ -1,0 +1,14 @@
+# power-engineer agent configuration
+# 功耗工程师 - 负责功耗分析和优化
+type: architect
+version: "1.0.0"
+phase: physical-design
+capabilities:
+  - 动态功耗分析
+  - 静态功耗分析
+  - 功耗优化
+  - 功耗签名
+skills:
+  - power-analysis
+  - power-optimization
+createdAt: "2026-03-22"

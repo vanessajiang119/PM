@@ -1,0 +1,14 @@
+# spec-reviewer agent configuration
+# 规格评审员 - 负责评审规格文档的完整性和一致性
+type: reviewer
+version: "1.0.0"
+phase: specification
+capabilities:
+  - 规格完整性检查
+  - 一致性分析
+  - 可实现性评估
+  - 风险识别
+skills:
+  - review-checklist
+  - consistency-analysis
+createdAt: "2026-03-22"
