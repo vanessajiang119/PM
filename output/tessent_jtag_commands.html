@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tessent JTAG 命令参考</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section-title {
+            font-size: 1.4em;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background: #f5f7fa;
+            color: #1e3c72;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background: #f8f9ff;
+        }
+        .category-header {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        .category-header td {
+            padding: 15px;
+        }
+        .command {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f0f4ff;
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #2a5298;
+            font-size: 0.85em;
+        }
+        .usage-note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        pre .keyword {
+            color: #c678dd;
+        }
+        pre .string {
+            color: #98c379;
+        }
+        pre .comment {
+            color: #5c6370;
+        }
+        .footer {
+            background: #f5f7fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.85em;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .badge-ieee1149 {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        .badge-ieee1687 {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .badge-ssn {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Tessent JTAG 命令参考</h1>
+            <p class="subtitle">来源: RAG 知识库 - Tessent Shell 用户手册 v2024.2</p>
+        </header>
+
+        <div class="content">
+            <div class="usage-note">
+                <strong>提示:</strong> Tessent 是 Siemens EDA 的 DFT 解决方案。所有 DFT 工作优先使用 Tessent 工具。
+                数据来自 <code>rag/documents/dft-engineer/tessent_command/</code> 目录下的知识库。
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="badge badge-ieee1149">IEEE 1149.1</span>
+                    边界扫描命令 (Boundary Scan)
+                </h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%">命令名称</th>
+                            <th style="width: 75%">用途说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="command">insert_boundary_scan</span></td>
+                            <td>插入 IEEE 1149.1 边界扫描架构，自动连接 TAP (Test Access Port) 控制器和边界扫描单元</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">report_boundary_scan</span></td>
+                            <td>报告边界扫描配置信息，包括扫描链数量、端口状态等</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">set_boundary_scan_port_option</span></td>
+                            <td>设置边界扫描端口选项，如输入/输出模式、上拉电阻等</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">set_boundary_scan_port_options</span></td>
+                            <td>批量设置多个边界扫描端口的配置参数</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">report_boundary_scan_port_options</span></td>
+                            <td>报告当前边界扫描端口的配置状态</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="badge badge-ieee1687">IEEE 1687</span>
+                    IJTAG 命令 (内建自测试)
+                </h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%">命令名称</th>
+                            <th style="width: 75%">用途说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="command">read_icl</span></td>
+                            <td>读取 ICL (Instrument Connectivity Language) 文件，定义 IJTAG 网络的 instruments 和互相连接</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">create_icl_network</span></td>
+                            <td>根据 ICL 描述创建完整的 IJTAG 网络拓扑结构</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">create_icl_setup_patterns</span></td>
+                            <td>生成 IJTAG 初始化设置模式，用于配置 instruments</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">create_icl_flush_patterns</span></td>
+                            <td>生成 IJTAG 刷新模式，用于数据刷新操作</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">create_icl_verification_patterns</span></td>
+                            <td>生成验证模式，用于验证 IJTAG 网络正确性</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">write_icl</span></td>
+                            <td>输出 ICL 网络描述文件</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">add_ijtag_logical_connection</span></td>
+                            <td>添加 IJTAG 逻辑连接，定义 instrument 之间的数据路径</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">add_ijtag_logical_connections</span></td>
+                            <td>批量添加多个 IJTAG 逻辑连接</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">get_ijtag_instances</span></td>
+                            <td>获取设计中所有 IJTAG instrument 实例</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">get_ijtag_instance_option</span></td>
+                            <td>获取特定 IJTAG instrument 的选项配置</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">set_ijtag_instance_options</span></td>
+                            <td>设置 IJTAG instrument 的选项参数</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">report_ijtag_instances</span></td>
+                            <td>报告所有 IJTAG instrument 的信息</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">report_ijtag_logical_connections</span></td>
+                            <td>报告 IJTAG 逻辑连接的配置</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">get_ijtag_retargeting_options</span></td>
+                            <td>获取 IJTAG 重定向选项（用于跨 die 测试）</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">set_ijtag_retargeting_options</span></td>
+                            <td>设置 IJTAG 重定向选项参数</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">create_ijtag_graybox</span></td>
+                            <td>创建 IJTAG 灰盒模型，用于行为级仿真</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="badge badge-ssn">SSN</span>
+                    同时开关噪声命令
+                </h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%">命令名称</th>
+                            <th style="width: 75%">用途说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="command">add_buffers_on_jtag_signal_sources</span></td>
+                            <td>在 JTAG 信号源上添加缓冲器，减少 SSN 噪声</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">add_icl_ssn_datapaths</span></td>
+                            <td>添加 SSN 数据路径用于噪声分析</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">get_icl_ssn_datapath_list</span></td>
+                            <td>获取 ICL SSN 数据路径列表</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">get_icl_ssn_datapath_ports</span></td>
+                            <td>获取 ICL SSN 数据路径端口</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">set_icl_ssn_datapath_ports</span></td>
+                            <td>设置 ICL SSN 数据路径端口</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">get_default_ssn_datapath_configuration</span></td>
+                            <td>获取默认 SSN 数据路径配置</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">set_default_ssn_datapath_configuration</span></td>
+                            <td>设置默认 SSN 数据路径配置</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">get_ssn_datapath_option</span></td>
+                            <td>获取 SSN 数据路径选项</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">set_ssn_datapath_options</span></td>
+                            <td>设置 SSN 数据路径选项</td>
+                        </tr>
+                        <tr>
+                            <td><span class="command">report_default_ssn_datapath_configuration</span></td>
+                            <td>报告默认 SSN 数据路径配置</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">典型使用流程</h2>
+                <pre><span class="comment"># 1. 设置上下文</span>
+<span class="keyword">set_context</span> dft -boundary_scan
+
+<span class="comment"># 2. 读取 ICL 定义 (IJTAG)</span>
+<span class="keyword">read_icl</span> design.icl
+
+<span class="comment"># 3. 创建 IJTAG 网络</span>
+<span class="keyword">create_icl_network</span>
+
+<span class="comment"># 4. 插入边界扫描</span>
+<span class="keyword">insert_boundary_scan</span>
+
+<span class="comment"># 5. 配置 JTAG 信号</span>
+<span class="keyword">set_dft_signal</span> -type scanin -port TDI
+<span class="keyword">set_dft_signal</span> -type scanout -port TDO
+<span class="keyword">set_dft_signal</span> -type scan_enable -port TMS
+<span class="keyword">set_dft_signal</span> -type scan_clock -port TCK
+
+<span class="comment"># 6. 报告结果</span>
+<span class="keyword">report_boundary_scan</span>
+<span class="keyword">report_ijtag_instances</span></pre>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">命令分类总结</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>标准</th>
+                            <th>说明</th>
+                            <th>命令数量</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-ieee1149">IEEE 1149.1</span></td>
+                            <td>Classic JTAG - 边界扫描链、TAP控制器</td>
+                            <td>5</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-ieee1687">IEEE 1687</span></td>
+                            <td>IJTAG - 内建自测试网络、可编程instrument</td>
+                            <td>16</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-ssn">SSN</span></td>
+                            <td>同时开关噪声分析相关命令</td>
+                            <td>10</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>数据来源: Tessent Shell Reference Manual, v2024.24</p>
+            <p>存储位置: rag/documents/dft-engineer/tessent_command/</p>
+        </div>
+    </div>
+</body>
+</html>
