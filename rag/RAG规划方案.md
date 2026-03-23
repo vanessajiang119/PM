@@ -41,7 +41,8 @@
 │   ├── dft-engineer/             # DFT工程师文档
 │   │   ├── scan_insertion/
 │   │   ├── atpg_guides/
-│   │   └── mbist_designs/
+│   │   ├── mbist_designs/
+│   │   └── tessent_command/       # Tessent命令统一指导
 │   ├── physical-designer/        # 物理设计工程师文档
 │   │   ├── floorplanning/
 │   │   ├── place_route/
@@ -104,7 +105,24 @@ verification-engineer/
 ```
 **预期文档类型**: UVM教程、测试台代码、覆盖率报告
 
-### 2.4 其他Agent角色类似...
+### 2.4 dft-engineer (DFT工程师)
+```
+dft-engineer/
+├── scan_insertion/               # Scan链插入
+├── atpg_guides/                  # ATPG向量生成
+├── mbist_designs/                # MBIST存储器测试
+├── tessent_command/              # Tessent命令统一指导
+│   ├── scan_commands/            # Scan相关命令
+│   ├── mbist_commands/           # MBIST相关命令
+│   ├── atpg_commands/            # ATPG相关命令
+│   └── flow_scripts/             # 流程脚本
+└── README.md                     # 目录说明
+```
+**预期文档类型**: DFT设计指南、Tessent工具命令、Scan/MBIST/ATPG脚本
+
+> **Note**: DFT工程师优先使用 **Tessent** 工具进行 scan insertion、MBIST 和 ATPG 所有工作。
+
+### 2.5 其他Agent角色类似...
 
 ## 3. RAG 优化方案 (支持1000+页文档)
 

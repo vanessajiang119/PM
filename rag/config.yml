@@ -1,0 +1,237 @@
+# Chip Design Agent RAG System Configuration
+
+# RAG Global Configuration
+rag:
+  name: "chip_design_rag"
+  version: "1.0.0"
+
+# Document Chunking Strategy
+chunking:
+  chunk_size: 1024
+  chunk_overlap: 128
+
+  by_document_type:
+    technical_specs:
+      chunk_size: 2048
+      overlap: 256
+
+    code_documentation:
+      chunk_size: 512
+      overlap: 64
+      preserve_language: true
+
+    user_guides:
+      chunk_size: 1024
+      overlap: 128
+
+  special_handling:
+    tables: "extract_as_json"
+    figures: "ocr_and_describe"
+    formulas: "latex_preserve"
+
+# Embedding Model Configuration
+embedding:
+  model: "text-embedding-3-large"
+  dimensions: 3072
+  batch_size: 1000
+
+  local_models:
+    - name: "bge-m3"
+      dimension: 1024
+      quantized: true
+    - name: "bge-large-zh-v1.5"
+      dimension: 1024
+
+# Vector Database Configuration
+vector_db:
+  primary: "chroma"
+
+  chroma_config:
+    persist_directory: "./data/chroma"
+    collection_name: "chip_design"
+    distance_metric: "cosine"
+
+  hnsw_config:
+    ef_construction: 200
+    ef_search: 200
+    M: 16
+
+  index_optimization:
+    incremental_update: true
+    batch_indexing: true
+    num_workers: 4
+
+# Retrieval Configuration
+retrieval:
+  multi_way_recall:
+    - method: "semantic"
+      weight: 0.4
+    - method: "keyword"
+      weight: 0.3
+      engine: "bm25"
+    - method: "exact"
+      weight: 0.2
+    - method: "agent_specific"
+      weight: 0.1
+
+  reranking:
+    enabled: true
+    model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    top_k: 10
+
+  query_processing:
+    expand_query: true
+    expand_with_synonyms: true
+    language_detection: true
+
+  context_window:
+    max_chunks: 10
+    max_tokens: 8000
+    aggregate_strategy: "longest"
+
+# Agent-Specific RAG Configuration
+agent_rag:
+  spec-architect:
+    preferred_sources: ["spec-architect", "common"]
+    search_depth: "detailed"
+    include_cross_references: true
+
+  rtl-developer:
+    preferred_sources: ["rtl-developer", "common"]
+    include_code_examples: true
+    search_related_ip: true
+
+  cross_agent:
+    enabled: true
+    shared_sources: ["common", "shared"]
+    reference_other_agents: true
+
+# Large Document Handling
+large_document_handling:
+  strategies:
+    structure_aware:
+      enabled: true
+      detect_sections: true
+      detect_headings: true
+      table_of_contents: true
+
+    summarization:
+      enabled: true
+      summary_model: "gpt-4o"
+      summary_chunk_size: 10
+      store_summaries: true
+
+    multi_level:
+      enabled: true
+      levels:
+        - name: "overview"
+          chunk_size: 4096
+        - name: "detail"
+          chunk_size: 1024
+        - name: "reference"
+          chunk_size: 512
+
+    incremental:
+      enabled: true
+      track_modifications: true
+      update_strategy: "smart"
+
+  performance:
+    cache_embeddings: true
+    parallel_processing: true
+    memory_limit: "16GB"
+    batch_processing: true
+
+# Post-Processing Configuration
+post_processing:
+  deduplication:
+    enabled: true
+    similarity_threshold: 0.95
+
+  ranking:
+    diversity_weight: 0.2
+    recency_weight: 0.1
+    authority_weight: 0.1
+
+  formatting:
+    include_source: true
+    include_page_number: true
+    include_relevance_score: true
+    max_source_length: 200
+
+# API Endpoints
+api:
+  endpoints:
+    - path: "/rag/ingest"
+      method: "POST"
+      description: "Upload and index documents"
+
+    - path: "/rag/query"
+      method: "POST"
+      description: "RAG query"
+
+    - path: "/rag/rebuild"
+      method: "POST"
+      description: "Rebuild index"
+
+    - path: "/rag/stats"
+      method: "GET"
+      description: "Get RAG statistics"
+
+# Integration Configuration
+integration:
+  agent_integration:
+    hook_name: "on_rag_query"
+    auto_retrieve: true
+
+  memory_integration:
+    store_rag_results: true
+    context_window: 5
+
+  config_in_define:
+    enabled: true
+    section: "rag"
+
+# Knowledge Base Documents
+knowledge_base:
+  # Agent-specific document paths
+  agent_documents:
+    dft-engineer:
+      path: "documents/dft-engineer"
+      subdirs:
+        - "scan_insertion"
+        - "atpg_guides"
+        - "mbist_designs"
+        - "tessent_command"
+      pdf_documents:
+        - path: "documents/dft-engineer/tessent_command/scan_commands/tshell_ref.pdf"
+          description: "Tessent Shell Reference Manual"
+          indexed: false
+          category: "tessent_command"
+        - path: "documents/dft-engineer/tessent_command/scan_commands/tshell_user.pdf"
+          description: "Tessent Shell User Guide"
+          indexed: false
+          category: "tessent_command"
+
+  # Document indexing status
+  indexing:
+    status: "pending"
+    last_indexed: null
+    chunk_size: 2048
+    overlap: 256
+
+# Dependencies
+requirements:
+  python_packages:
+    - "chromadb>=0.4.0"
+    - "langchain>=0.1.0"
+    - "langchain-community>=0.0.10"
+    - "pypdf>=3.0.0"
+    - "pydantic>=2.0.0"
+    - "tiktoken>=0.5.0"
+    - "faiss-cpu"
+
+  system_requirements:
+    python_version: ">=3.11"
+    min_ram: "16GB"
+    min_disk_space: "100GB"

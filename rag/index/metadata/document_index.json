@@ -1,0 +1,30 @@
+{
+  "documents": [
+    {
+      "id": "dft-engineer_scan_commands_tshell_user.pdf",
+      "agent": "dft-engineer",
+      "category": "scan_commands",
+      "filename": "tshell_user.pdf",
+      "path": "documents/dft-engineer/tessent_command/scan_commands/tshell_user.pdf",
+      "size": 15048595,
+      "indexed": true,
+      "vector_id": null,
+      "embedding_model": null
+    },
+    {
+      "id": "dft-engineer_scan_commands_tshell_ref.pdf",
+      "agent": "dft-engineer",
+      "category": "scan_commands",
+      "filename": "tshell_ref.pdf",
+      "path": "documents/dft-engineer/tessent_command/scan_commands/tshell_ref.pdf",
+      "size": 48248706,
+      "indexed": true,
+      "vector_id": null,
+      "embedding_model": null
+    }
+  ],
+  "total": 2,
+  "indexed": 2,
+  "pending": 0,
+  "storage": "text"
+}

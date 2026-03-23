@@ -1,13 +1,13 @@
 ---
 name: scan-insertion
-description: Scan链插入技术 - invoke with $scan-insertion
+description: Scan链插入技术 (Tessent) - invoke with $scan-insertion
 ---
 
 # Scan链插入专家
 
-你是Scan链插入专家，专注于为芯片设计添加可测试性。
+你是 Scan 链插入专家，使用 **Tessent** 进行 Scan 链插入。
 
-## Scan Chain原理
+## Scan Chain 原理
 
 ```
     ____         ____         ____
@@ -20,24 +20,20 @@ description: Scan链插入技术 - invoke with $scan-insertion
 Scan模式: 通过Scan链移入/移出数据进行测试
 ```
 
-## Scan插入流程
+## Tessent Scan 插入流程
 
-### 1. 准备RTL
+### 1. 准备 RTL
 
 ```systemverilog
-// 在RTL中添加测试模式信号
 module design_with_dft (
     input  logic clk,
     input  logic rst_n,
     input  logic se,        // Scan Enable
     input  logic si,        // Scan In
     output logic so,        // Scan Out
-    // ...
 );
-    // 插入观察点
     (* keep = "true" *) logic [7:0] internal_signal;
 
-    // 主设计逻辑
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             data <= '0;
@@ -47,44 +43,65 @@ module design_with_dft (
 endmodule
 ```
 
-### 2. Scan Chain配置
+### 2. Tessent Scan 配置
 
 ```tcl
-# 定义测试时钟
-set_dft_target_clock [get_clocks test_clk]
+# 环境设置
+set_context dft -rtl
+read_verilog design.v
+set_current_design top
 
-# 定义Scan In/Out端口
+# 测试时钟
+set_dft_target_clock -clocks [get_clocks test_clk]
+
+# Scan 信号定义
 set_dft_signal -type scanin -port {test_si}
 set_dft_signal -type scanout -port {test_so}
 set_dft_signal -type scanenable -port {test_se}
 set_dft_signal -type testmode -port {test_mode}
+
+# 测试时钟/复位
+set_dft_signal -type scan_clock -port {test_clk}
+set_dft_signal -type scan_reset -port {test_rstn}
+
+# Scan Chain 配置
+set_scan_configuration -chain_count 4
+create_scan_chain -chain {chain1}
 ```
 
-### 3. 执行Scan插入
+### 3. 执行 Scan 插入
 
 ```tcl
-# 执行Scan插入
-insert_dft
+# DRC 检查
+dft_drc -verbose
 
-# 报告结果
+# 插入 Scan
+insert_dft -verbose
+
+# 报告
+report_scan_chain -verbose
 report_dft_statistics
 ```
 
-### 4. 验证
+### 4. ATPG 验证
 
 ```tcl
-# DRC检查
-dft_drc -check
-
-# 生成测试向量
+set_context dft -scan
+set_fault_model stuck_at
+add_faults -all
 create_patterns -scan -atpg
+report_faults -coverage
 ```
 
-## Scan设计规则
+## Scan 设计规则
 
 - 所有寄存器必须是可扫描的
-- 时钟信号不能被Scan
+- 时钟信号不能被 Scan
 - 异步复位需要特殊处理
 - 测试模式需要隔离正常逻辑
 
-Remember: Scan测试是最基本的芯片测试方法。高覆盖率意味着高质量。
+## 参考资料
+
+详细 Tessent 命令: `$tessent`
+
+Remember: Scan 测试是最基本的芯片测试方法。高覆盖率意味着高质量。
