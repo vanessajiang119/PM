@@ -1,0 +1,91 @@
+#! /bin/sh -f
+#\
+exec tessent -shell -log $0.log -replace -dofile "$0"
+
+# =============================================================================
+# sram_ctrl DFT RTL3: Final DFT Configuration (BSCAN + MBIST + Logic Test)
+# =============================================================================
+# Reference: Tiling Flow v2023.4 - c1 module
+# Design: sram_ctrl - SRAM Controller IP
+# =============================================================================
+
+set_context dft -rtl -design_id rtl3
+read_cell_library ../../library/cells/adk.tcelllib
+
+# Read SRAM and PLL interface files
+if {[file exists ../../library/macros/pll.v]} {
+    read_verilog ../../library/macros/pll.v -interface_only -exclude_from_file_dictionary
+}
+if {[file exists ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v]} {
+    read_verilog ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v -interface_only -exclude_from_file_dictionary
+}
+
+read_design sram_ctrl -design_id rtl2
+set_current_design sram_ctrl
+
+set_dft_specification_requirements -logic_test on
+
+## DFT Signals
+add_dft_signals int_edt_mode ext_edt_mode
+add_dft_signals memory_bypass_en tck_occ_en
+add_dft_signals ltest_en int_ltest_en ext_ltest_en
+# To allow isolating the tile to tile testing from the PIs/POs of the device
+# as those are tested during boundary scan test.
+# Keeps SSN using internal capture mode
+add_dft_signals bscan_input_isolation_enable output_pad_disable
+
+check_design_rules
+
+set spec [create_dft_spec -sri_sib_list {occ edt ssn}]
+
+
+# Prevents ports to be created in tiling flow and
+# makes sure all DFT ports were properly added and
+# connected in the die netlist.
+set_config_value allow_port_creation_on_current_design -in $spec off
+
+read_config_data -in_wrapper $spec -from_string {
+  OCC {
+    ijtag_host_interface : Sib(occ);
+    include_clocks_in_icl_model : yes;
+    Controller(clk) {
+       clock_intercept_node : clk;
+    }
+  }
+  EDT {
+    ijtag_host_interface : Sib(edt);
+    Controller(sram_ctrl_int) {
+      longest_chain_range            : 10, 50;
+      scan_chain_count               : 4;
+      input_channel_count            : 2;
+      output_channel_count           : 2;
+      Connections {
+        mode_enables                 : DftSignal(int_edt_mode);
+      }
+    }
+    Controller(sram_ctrl_ext) {
+      longest_chain_range            : 10, 50;
+      scan_chain_count               : 2;
+      input_channel_count            : 1;
+      output_channel_count           : 1;
+      Connections {
+        mode_enables                 : DftSignal(ext_edt_mode);
+      }
+    }
+  }
+}
+
+process_dft_specification
+
+extract_icl -create_ijtag_graybox on
+
+write_design_import_script -use_relative_path_to . -replace
+
+set spec [create_patterns_specification -bscan_sim_views ijtag_graybox]
+process_patterns_specification
+set_simulation_library_sources -Y ../../library/macros/ -extensions {v} -V ../../library/cells/adk.v
+run_testbench_simulations
+
+if {![getenv NO_EXIT -default 0]} {
+  exit
+}

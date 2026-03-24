@@ -1,0 +1,71 @@
+define_design_lib work -path work
+
+set tessent_hierarchy_separator /
+  # The instances must be preserved in the post-synthesis netlist in order to perform further actions on it:
+  #   add_core_instances
+  #   scan_insertion       superset of 'add_core_instances' list
+  #   icl_extract          superset of 'scan_insertion' list
+set preserve_type scan_insertion
+
+# Edit to cater to your design_name and design_id
+set design_name sram_ctrl
+set design_id rtl3
+
+# Read in the file written out during Step 2 using write_design_import_script
+source ${design_name}.dc_shell_import_script
+
+# Read interface view of memories cause we are missing the .db view
+if {[file exists ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v_interface]} {
+    read_verilog ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v_interface
+    set_dont_touch MGC_SYNC_1RW_1024x8_RC
+}
+
+# Read in the sdc written out from the second insertion pass
+source tsdb_outdir/dft_inserted_designs/${design_name}_${design_id}.dft_inserted_design/${design_name}.sdc
+tessent_set_default_variables
+elaborate ${design_name}
+link
+check_design
+current_design ${design_name}
+
+# Do not perform boundary optimization on tessent_get_preserve_instances
+set preserve_instances [tessent_get_preserve_instances ${preserve_type}]
+set_boundary_optimization  $preserve_instances false
+set_ungroup $preserve_instances false
+# DC ultra only
+# set_compile_directives $preserve_instances -delete_unloaded_gate false
+# For DC Shell only
+set compile_seqmap_propagate_high_effort false
+set compile_delete_unloaded_sequential_cells false
+
+set optimize_instances [tessent_get_optimize_instances]
+set_boundary_optimization $optimize_instances true
+set size_only_instances [tessent_get_size_only_instances]
+if {$size_only_instances ne ""} {
+set_size_only -all_instances $size_only_instances
+}
+
+if {[info exists ::env(SKIP_SDC)] && $::env(SKIP_SDC)} {
+  puts "Info: Skip SDC during regression to speed up run because ::env(SKIP_SDC) is 1."
+} else {
+  # Apply the SDC constraints here
+  source ${design_name}.sdc_functional
+
+  # Apply the tessent SDC constraints
+  source ${design_name}.timing_options
+  set tessent_tck_period [set ${design_name}_tck_period]
+  # Call non_modal SDC proc sourced at the top of the dofile
+  tessent_constrain_${design_name}_non_modal
+}
+
+# Synthesize
+compile
+
+if {[file exists ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v_interface]} {
+    remove_design MGC_SYNC_1RW_1024x8_RC
+}
+
+# Write the synthesized netlist out
+write -f verilog -hierarchy -output sram_ctrl.vg
+
+exit

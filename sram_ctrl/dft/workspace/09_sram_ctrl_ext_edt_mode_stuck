@@ -1,0 +1,55 @@
+#! /bin/sh -f
+#\
+exec tessent -shell -log $0.log -replace -dofile "$0"
+
+# =============================================================================
+# sram_ctrl ATPG - External EDT Mode (Stuck-at)
+# =============================================================================
+# Reference: Tiling Flow v2023.4 - c1 module
+# Fault Model: Stuck-at
+# Scan Mode: External EDT
+# =============================================================================
+
+set_context patterns -scan
+read_cell_library ../../library/cells/adk.tcelllib
+
+# Read SRAM and PLL interface files
+if {[file exists ../../library/macros/pll.v]} {
+    read_verilog ../../library/macros/pll.v -interface_only -exclude_from_file_dictionary
+}
+if {[file exists ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v]} {
+    read_verilog ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v -interface_only -exclude_from_file_dictionary
+}
+
+read_design sram_ctrl -view scan_graybox
+set_current_design sram_ctrl
+
+import_scan_mode ext_edt_mode -fast_capture_mode off -verbose
+# Isolate PIs equipped with BSCAN cells in external test mode
+set_static_dft_signal_values bscan_input_isolation_enable 1 output_pad_disable 1
+
+set_current_mode ext_edt_mode_stuck -type external
+
+check_design_rules
+
+set_fault_type stuck
+set_atpg_limits -p 128
+create_patterns
+write_tsdb_data -replace
+
+set testbench_type atpg
+source ../../utilities/write_testbenches.dofile
+
+if {[getenv SKIP_SIMS -default 0] eq "0"} {
+  set tb_file_list [lsort -dictionary [glob ${tb_dir}/${td_prefix}*.v]]
+  set spec [create_patterns_specification -replace -testbench_files $tb_file_list]
+
+  process_patterns_specification
+
+  set_simulation_library_sources -v ../../library/cells/adk.v -y ../../library/macros -extension v
+  run_testbench_simulations ;#-store_sim_wave on  -simulator_options "-debugDB"
+}
+
+if {![getenv NO_EXIT -default 0]} {
+  exit
+}

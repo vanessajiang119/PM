@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# =============================================================================
+# sram_ctrl Synthesis for DFT
+# =============================================================================
+# Reference: Tiling Flow v2023.4 - c1 module
+# Tool: Design Compiler
+# =============================================================================
+
+# Check if library DB exists, if not create it
+if [ ! -f ../../library/cells/adk.db ]; then
+   echo "//"
+   echo "//  Note: The ../../library/cells/adk.db file does not exist. Running Library Compiler to create it"
+   echo "//"
+   lc_shell <<!
+   read_lib ../../library/cells/adk.lib
+   write_lib adk_typ -format db -output ../../library/cells/adk.db
+   exit
+!
+fi
+
+# Run synthesis using DC script
+dc_shell -f sram_ctrl.dc_synth_script
+
+# Verify gate file
+GATEFILE=sram_ctrl.vg
+if [ ! -f "$GATEFILE" ]; then
+    echo "Synthesis of $GATEFILE failed or was skipped. Copying $GATEFILE from sources."
+    cp ../../design/sram_ctrl/sram_ctrl.vg .
+else
+    echo "$GATEFILE exists in sram_ctrl workspace"
+fi

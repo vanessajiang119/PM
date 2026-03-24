@@ -1,0 +1,71 @@
+#! /bin/sh -f
+#\
+exec tessent -shell -log $0.log -replace -dofile "$0"
+
+# =============================================================================
+# sram_ctrl DFT Gate-Level Insertion
+# =============================================================================
+# Reference: Tiling Flow v2023.4 - c1 module
+# =============================================================================
+
+set_context dft -scan
+read_cell_library ../../library/cells/adk.tcelllib
+
+# Read SRAM and PLL interface files
+if {[file exists ../../library/macros/pll.v]} {
+    read_verilog ../../library/macros/pll.v -interface_only -exclude_from_file_dictionary
+}
+if {[file exists ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v]} {
+    read_verilog ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v -interface_only -exclude_from_file_dictionary
+}
+
+read_design sram_ctrl -design_id rtl3 -no_hdl
+read_verilog sram_ctrl.vg
+set_current_design sram_ctrl
+
+check_design_rules
+
+set_wrapper_analysis_options -output_fanin_flop_threshold 128 \
+                             -input_fanout_flop_threshold 128 \
+                             -output_fanin_libcell_levels_threshold unlimited \
+                             -input_fanout_libcell_levels_threshold unlimited
+
+# Ports equipped with boundary scan logic are automatically excluded from wrapper analysis
+puts "Ports equipped with boundary scan logic and excluded from wrapper analysis:"
+puts [get_name_list [get_ports -filter equipped_with_bscan==true]]
+analyze_wrapper_cells
+
+add_scan_mode int_edt_mode \
+              -edt_instances sram_ctrl_rtl3_tessent_edt_sram_ctrl_int_inst
+add_scan_mode ext_edt_mode \
+              -edt_instances sram_ctrl_rtl3_tessent_edt_sram_ctrl_ext_inst
+
+analyze_scan_chains
+
+insert_test_logic
+
+set_context patterns -scan
+
+# To make sure there is no sources of X left over in both internal and external modes
+set_drc_handling E5 error
+
+import_scan_mode int_edt_mode
+check_design_rules
+
+set_system_mode setup
+import_scan_mode ext_edt_mode
+# Isolate PIs equipped with BSCAN cells in external test mode
+set_static_dft_signal_values bscan_input_isolation_enable 1 output_pad_disable 1
+
+check_design_rules
+analyze_graybox
+write_design -tsdb -graybox
+
+set_context patterns -ijtag
+set_system_mode analysis
+analyze_graybox -ijtag
+write_design -tsdb -graybox -verbose
+
+if {![getenv NO_EXIT -default 0]} {
+  exit
+}

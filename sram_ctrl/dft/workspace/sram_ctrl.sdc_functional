@@ -1,0 +1,3 @@
+# SDC Functional Constraints for sram_ctrl
+create_clock clk -period 10.0 -name clk
+create_clock pclk -period 5.0 -name pclk

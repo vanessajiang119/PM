@@ -1,0 +1,11 @@
+# Timing Options for sram_ctrl DFT
+set sram_ctrl_tck_period      20.0; # No units allowed, nanoseconds assumed
+
+set_load_unload_timing_options          \
+ -usage ssn                             \
+ -shift_clock_period               10ns \
+ -ssn_bus_clock_period            2.5ns \
+ -scan_en_setup_extra_cycles        1   \
+ -scan_en_hold_extra_cycles         1   \
+ -edt_update_setup_extra_cycles     1   \
+ -edt_update_hold_extra_cycles      1

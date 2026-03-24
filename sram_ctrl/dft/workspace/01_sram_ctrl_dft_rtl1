@@ -1,0 +1,69 @@
+#! /bin/sh -f
+#\
+exec tessent -shell -log $0.log -replace -dofile "$0"
+
+# =============================================================================
+# sram_ctrl DFT RTL1: BSCAN Configuration + IJTAG Graybox
+# =============================================================================
+# Reference: Tiling Flow v2023.4 - c1 module
+# Design: sram_ctrl - SRAM Controller IP
+# =============================================================================
+
+set_context dft -rtl -design_id rtl1
+read_cell_library ../../library/cells/adk.tcelllib
+
+# Read SRAM and PLL interface files (if available)
+if {[file exists ../../library/macros/pll.v]} {
+    read_verilog ../../library/macros/pll.v -interface_only -exclude_from_file_dictionary
+}
+if {[file exists ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v]} {
+    read_verilog ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v -interface_only -exclude_from_file_dictionary
+}
+
+# Read RTL design - try different paths
+if {[file exists ../../design/sram_ctrl/sram_ctrl.v_with_dft_port]} {
+    read_verilog ../../design/sram_ctrl/sram_ctrl.v_with_dft_port
+} else {
+    read_verilog ../../design/sram_ctrl.v
+}
+
+set_current_design sram_ctrl
+set_design_level physical_block
+
+# BSCAN Configuration
+set_dft_specification_requirements -boundary_scan on -design_type tile
+
+# Define boundary scan ports for SRAM controller
+# Key signals: clocks, resets, control signals
+set_boundary_scan_port_options -pad_io_ports {clk rst_n pclk prst_n test_mode test_se test_si}
+
+add_clocks 0 clk -period 10ns
+add_clocks 0 pclk -period 5ns
+
+check_design_rules
+
+set spec [create_dft_specification]
+
+# Prevents ports to be created in tiling flow and
+# makes sure all DFT ports were properly added and
+# connected in the die netlist.
+set_config_value allow_port_creation_on_current_design -in $spec off
+
+# Use EBScan segment as Dedicated wrapper cells during logictest
+set_config_value EmbeddedBoundaryScan/max_segment_length_for_logictest -in $spec 200
+
+report_config_data $spec
+
+process_dft_specification
+
+extract_icl -create_ijtag_graybox on
+
+set spec [create_patterns_specification -bscan_sim_views ijtag_graybox]
+process_patterns_specification
+
+set_simulation_library_sources -Y ../../library/macros/ -extensions {v} -V ../../library/cells/adk.v
+run_testbench_simulations
+
+if {![getenv NO_EXIT -default 0]} {
+  exit
+}

@@ -1,0 +1,54 @@
+#! /bin/sh -f
+#\
+exec tessent -shell -log $0.log -replace -dofile "$0"
+
+# =============================================================================
+# sram_ctrl ATPG - Internal EDT Mode (Transition Delay Fault)
+# =============================================================================
+# Reference: Tiling Flow v2023.4 - c1 module
+# Fault Model: Transition Delay Fault (TDF)
+# Scan Mode: Internal EDT
+# =============================================================================
+
+set_context patterns -scan
+read_cell_library ../../library/cells/adk.tcelllib
+
+# Read SRAM and PLL interface files
+if {[file exists ../../library/macros/pll.v]} {
+    read_verilog ../../library/macros/pll.v -interface_only -exclude_from_file_dictionary
+}
+if {[file exists ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v]} {
+    read_verilog ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v -interface_only -exclude_from_file_dictionary
+}
+
+read_design sram_ctrl
+set_current_design sram_ctrl
+
+import_scan_mode int_edt_mode -fast_capture_mode on -verbose
+
+set_core_instance_parameters -instrument_type occ -parameter_values {capture_window_size 2}
+set_current_mode int_edt_mode_tdf -type internal
+
+check_design_rules
+
+set_fault_type transition
+set_atpg_limit -p 128
+create_patterns
+write_tsdb_data -replace
+
+set testbench_type atpg
+source ../../utilities/write_testbenches.dofile
+
+if {[getenv SKIP_SIMS -default 0] eq "0"} {
+  set tb_file_list [lsort -dictionary [glob ${tb_dir}/${td_prefix}*.v]]
+  set spec [create_patterns_specification -replace -testbench_files $tb_file_list]
+
+  process_patterns_specification
+
+  set_simulation_library_sources -v ../../library/cells/adk.v -y ../../library/macros -extension v
+  run_testbench_simulations ;#-store_sim_wave on  -simulator_options "-debugDB"
+}
+
+if {![getenv NO_EXIT -default 0]} {
+  exit
+}

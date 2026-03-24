@@ -1,0 +1,57 @@
+#! /bin/sh -f
+#\
+exec tessent -shell -log $0.log -replace -dofile "$0"
+
+# =============================================================================
+# sram_ctrl DFT RTL2: MBIST Configuration
+# =============================================================================
+# Reference: Tiling Flow v2023.4 - c1 module
+# Design: sram_ctrl - SRAM Controller IP
+# =============================================================================
+
+set_context dft -rtl -design_id rtl2
+read_cell_library ../../library/cells/adk.tcelllib
+
+# Read SRAM and PLL interface files
+if {[file exists ../../library/macros/pll.v]} {
+    read_verilog ../../library/macros/pll.v -interface_only -exclude_from_file_dictionary
+}
+if {[file exists ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v]} {
+    read_verilog ../../library/macros/MGC_SYNC_1RW_1024x8_RC.v -interface_only -exclude_from_file_dictionary
+}
+
+read_design sram_ctrl -design_id rtl1
+set_current_design sram_ctrl
+
+read_upf ../../design/sram_ctrl/sram_ctrl.upf
+
+set_dft_specification_requirements -memory_test on -design_type tile
+
+add_clocks 0 clk -period 10ns
+
+report_clocks
+
+check_design_rules
+
+set spec [create_dft_specification]
+
+# Prevents ports to be created in tiling flow and
+# makes sure all DFT ports were properly added and
+# connected in the die netlist.
+set_config_value allow_port_creation_on_current_design -in $spec off
+
+report_config_data $spec
+process_dft_specification
+
+extract_icl -create_ijtag_graybox on
+
+set spec [create_patterns_specification -bscan_sim_views ijtag_graybox]
+report_config_data $spec
+process_patterns_specification
+
+set_simulation_library_sources -Y ../../library/macros/ -extensions {v} -V ../../library/cells/adk.v
+run_testbench_simulations
+
+if {![getenv NO_EXIT -default 0]} {
+  exit
+}
